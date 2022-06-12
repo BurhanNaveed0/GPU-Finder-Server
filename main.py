@@ -9,6 +9,8 @@ params_3060 = {
     'type': 'search',
     'amazon_domain': 'amazon.com',
     'search_term': 'RTX 3060',
+    'exclude_sponsored': "true",
+    'max_page' : '5',
     'sort_by': 'price_low_to_high'
 }
 
@@ -17,6 +19,8 @@ params_3070 = {
     'type': 'search',
     'amazon_domain': 'amazon.com',
     'search_term': 'RTX 3070',
+    'exclude_sponsored': "true",
+    'max_page' : '5',
     'sort_by': 'price_low_to_high'
 }
 
@@ -25,6 +29,9 @@ params_3080 = {
     'type': 'search',
     'amazon_domain': 'amazon.com',
     'search_term': 'RTX 3080',
+    'exclude_sponsored': "true",
+    'refinements' : "p_36/2421890011",
+    'max_page' : '5',
     'sort_by': 'price_low_to_high'
 }
 
@@ -41,7 +48,15 @@ config = {
 }
 
 firebase = pyrebase.initialize_app(config)
-database = firebase.database();
+database = firebase.database()
+
+def get_msrp(name):
+    if(name == '3060'):
+        return 329
+    elif(name == '3070'):
+        return 499
+    elif(name == '3080'):
+        return 780
 
 def fetch_data_product(params):
     # MAKE API CALL
@@ -53,9 +68,17 @@ def fetch_data_product(params):
 
     # EXCLUDE UNWANTED SEARCH RESULT DATA
     search_results_refined = []
+    index = 0
+    name = params["search_term"][-4:]
 
-    for x in range(0, 10):
-        search_results_refined.append(search_results[x])
+    while(len(search_results_refined) < 10 and index < len(search_results)):
+        try:
+            if(name in search_results[index]["title"] and int(search_results[index]["price"]["value"]) >= get_msrp(name)):
+                search_results_refined.append(search_results[index])
+        except:
+            pass
+        
+        index += 1
 
     # FORMAT DATA
     filtered_search_results = []
@@ -93,7 +116,12 @@ def upload_data():
     database.child("3070").set(data_3070)
     database.child("3080").set(data_3080)
 
-schedule.every(10).minutes.do(upload_data())
+#schedule.every(5).minutes.do(upload_data())
+
+upload_data()
+
+
+
 
 
 
