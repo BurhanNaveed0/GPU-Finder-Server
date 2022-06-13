@@ -116,7 +116,10 @@ def upload_data():
     database.child("3070").set(data_3070)
     database.child("3080").set(data_3080)
 
-schedule.every(10).minutes.do(upload_data())
+schedule.every(5).minutes.do(upload_data)
+
+while True:
+    schedule.run_pending()
 
 
 
